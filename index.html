@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwiftCompress - Secure, Bulk Image Optimizer</title>
+    <!-- Tailwind CSS for modern, clean UI styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- JSZip for local zipping of files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+
+    <!-- Top Banner for Pro Upgrade -->
+    <div class="bg-indigo-600 text-white py-2 px-4 text-center text-sm font-medium">
+        <span>🎉 Free Trial: Compress up to 3 files. Unlock unlimited bulk optimization with a </span>
+        <a href="https://webutility.lemonsqueezy.com/checkout/buy/bc1498ca-5c2b-47b7-a2f9-bb6459cbe8a5" target="_blank" class="underline font-bold hover:text-indigo-200 ml-1">Lifetime Pro License ($15) →</a>
+    </div>
+
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto w-full px-6 py-6 flex justify-between items-center border-b border-slate-800">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl font-black tracking-tight text-white">Swift<span class="text-indigo-500">Compress</span></span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <span class="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full font-mono">100% Client-Side Privacy</span>
+            <a href="https://webutility.lemonsqueezy.com/checkout/buy/bc1498ca-5c2b-47b7-a2f9-bb6459cbe8a5" target="_blank" class="text-xs bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded font-medium transition">Upgrade to Pro</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-4xl mx-auto w-full px-6 py-12">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-white mb-2 tracking-tight">Bulk Image Optimization, Done Privately.</h1>
+            <p class="text-slate-400 max-w-lg mx-auto text-sm">Your files never touch a server. All compression happens locally inside your browser window for complete privacy and instant processing.</p>
+        </div>
+
+        <!-- Drag & Drop Area -->
+        <div id="drop-zone" class="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-xl p-10 text-center cursor-pointer transition bg-slate-800/50 mb-8">
+            <input type="file" id="file-input" multiple accept="image/jpeg, image/png, image/webp" class="hidden">
+            <div class="space-y-4">
+                <div class="text-4xl">📥</div>
+                <p class="text-base font-medium text-slate-200">Drag & drop your images here, or <span class="text-indigo-400 underline">browse files</span></p>
+                <p class="text-xs text-slate-500">Supports JPG, PNG, and WebP formats</p>
+            </div>
+        </div>
+
+        <!-- Settings & Configuration (Hidden until files are added) -->
+        <div id="settings-panel" class="hidden bg-slate-800 border border-slate-700 rounded-xl p-6 mb-8">
+            <h2 class="text-lg font-bold text-white mb-4">Compression Settings</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Quality Slider -->
+                <div>
+                    <div class="flex justify-between mb-2">
+                        <label for="quality-range" class="text-sm font-medium text-slate-300">Target Quality</label>
+                        <span id="quality-val" class="text-sm font-bold text-indigo-400">80%</span>
+                    </div>
+                    <input type="range" id="quality-range" min="10" max="100" value="80" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                </div>
+
+                <!-- Format Selection -->
+                <div>
+                    <label for="format-select" class="block text-sm font-medium text-slate-300 mb-2">Output Format</label>
+                    <select id="format-select" class="w-full bg-slate-700 border border-slate-600 rounded-lg py-2 px-3 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        <option value="original">Preserve Original Formats</option>
+                        <option value="jpeg">Convert to JPEG</option>
+                        <option value="webp">Convert to WebP</option>
+                        <option value="png">Convert to PNG (Lossless)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- File List / Queue -->
+        <div id="queue-panel" class="hidden bg-slate-800 border border-slate-700 rounded-xl overflow-hidden mb-8">
+            <div class="p-4 bg-slate-700/50 border-b border-slate-700 flex justify-between items-center">
+                <span class="text-sm font-bold text-white" id="queue-count">0 Files Selected</span>
+                <button id="clear-btn" class="text-xs text-slate-400 hover:text-red-400 transition">Clear Queue</button>
+            </div>
+            <div id="file-list" class="divide-y divide-slate-700 max-h-80 overflow-y-auto">
+                <!-- Dynamically populated files go here -->
+            </div>
+            <div class="p-4 bg-slate-700/30 flex justify-between items-center">
+                <div class="text-xs text-slate-400" id="savings-summary">
+                    Total Savings: <span class="text-emerald-400 font-bold">-0%</span>
+                </div>
+                <button id="process-btn" class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold py-2 px-6 rounded transition">
+                    Compress & Download ZIP
+                </button>
+            </div>
+        </div>
+
+        <!-- Premium Lock Alert / Modal (Hidden by default) -->
+        <div id="premium-modal" class="hidden bg-gradient-to-br from-indigo-900/80 to-slate-900 border border-indigo-500/50 rounded-xl p-8 text-center space-y-4 mb-8">
+            <div class="text-3xl">🔒</div>
+            <h3 class="text-xl font-extrabold text-white">Batch Limit Reached (Free Tier)</h3>
+            <p class="text-slate-300 text-sm max-w-md mx-auto">
+                You selected <span id="premium-count" class="font-bold text-indigo-400">0</span> files. The free tier is limited to processing 3 files at a time. Upgrade to the Lifetime Pro version to unlock unlimited batch sizes, faster performance, and lifetime access.
+            </p>
+            <div class="pt-2 flex flex-col sm:flex-row justify-center items-center gap-4">
+                <a href="https://webutility.lemonsqueezy.com/checkout/buy/bc1498ca-5c2b-47b7-a2f9-bb6459cbe8a5" target="_blank" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2.5 px-6 rounded text-sm transition shadow-lg shadow-indigo-500/20">
+                    Get Lifetime Pro for $15
+                </a>
+                <button id="dismiss-modal" class="text-slate-400 hover:text-slate-200 text-xs py-2 px-4 transition">
+                    Keep Free Trial (Limit to 3 files)
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-800 py-8 text-center text-xs text-slate-500">
+        <div class="max-w-6xl mx-auto px-6 space-y-2">
+            <p>&copy; 2025 SwiftCompress. Built for maximum privacy and fast performance.</p>
+            <p class="text-slate-600">No images are uploaded to external servers. File processing takes place purely in Javascript memory inside your web browser.</p>
+        </div>
+    </footer>
+
+    <!-- JS Logic -->
+    <script>
+        let selectedFiles = [];
+        const maxFreeFiles = 3;
+
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const settingsPanel = document.getElementById('settings-panel');
+        const queuePanel = document.getElementById('queue-panel');
+        const fileList = document.getElementById('file-list');
+        const queueCount = document.getElementById('queue-count');
+        const qualityRange = document.getElementById('quality-range');
+        const qualityVal = document.getElementById('quality-val');
+        const formatSelect = document.getElementById('format-select');
+        const processBtn = document.getElementById('process-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const savingsSummary = document.getElementById('savings-summary');
+        
+        // Premium Elements
+        const premiumModal = document.getElementById('premium-modal');
+        const premiumCount = document.getElementById('premium-count');
+        const dismissModal = document.getElementById('dismiss-modal');
+
+        // Drag and Drop Events
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-indigo-500', 'bg-slate-800');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-indigo-500', 'bg-slate-800');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-indigo-500', 'bg-slate-800');
+            handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        qualityRange.addEventListener('input', (e) => {
+            qualityVal.textContent = e.target.value + '%';
+        });
+
+        dismissModal.addEventListener('click', () => {
+            premiumModal.classList.add('hidden');
+            // Trim selection down to first 3 files
+            selectedFiles = selectedFiles.slice(0, maxFreeFiles);
+            updateUI();
+        });
+
+        clearBtn.addEventListener('click', () => {
+            selectedFiles = [];
+            updateUI();
+            premiumModal.classList.add('hidden');
+        });
+
+        function handleFiles(files) {
+            const arr = Array.from(files).filter(file => file.type.startsWith('image/'));
+            
+            // Merge files
+            selectedFiles = [...selectedFiles, ...arr];
+            
+            // Check free limit
+            if (selectedFiles.length > maxFreeFiles) {
+                premiumCount.textContent = selectedFiles.length;
+                premiumModal.classList.remove('hidden');
+            } else {
+                premiumModal.classList.add('hidden');
+            }
+
+            updateUI();
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function updateUI() {
+            if (selectedFiles.length === 0) {
+                settingsPanel.classList.add('hidden');
+                queuePanel.classList.add('hidden');
+                return;
+            }
+
+            settingsPanel.classList.remove('hidden');
+            queuePanel.classList.remove('hidden');
+            queueCount.textContent = `${selectedFiles.length} File${selectedFiles.length > 1 ? 's' : ''} Selected`;
+
+            fileList.innerHTML = '';
+            selectedFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'p-4 flex flex-col sm:flex-row sm:items-center justify-between text-sm gap-2';
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3 truncate">
+                        <span class="text-slate-500">${index + 1}.</span>
+                        <span class="font-medium text-slate-200 truncate max-w-xs md:max-w-md">${file.name}</span>
+                    </div>
+                    <div class="flex items-center space-x-4 text-xs font-mono">
+                        <span class="text-slate-400">${formatBytes(file.size)}</span>
+                        <button onclick="removeFile(${index})" class="text-slate-500 hover:text-red-400 font-sans font-medium transition">Remove</button>
+                    </div>
+                `;
+                fileList.appendChild(item);
+            });
+        }
+
+        window.removeFile = function(index) {
+            selectedFiles.splice(index, 1);
+            if (selectedFiles.length <= maxFreeFiles) {
+                premiumModal.classList.add('hidden');
+            }
+            updateUI();
+        };
+
+        // Core Client-side Compression
+        async function compressImage(file, qualityValue, outputFormat) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        ctx.drawImage(img, 0, 0, img.width, img.height);
+                        
+                        let mimeType = file.type;
+                        let ext = file.name.substring(file.name.lastIndexOf('.'));
+                        
+                        if (outputFormat !== 'original') {
+                            mimeType = 'image/' + outputFormat;
+                            ext = '.' + outputFormat;
+                        }
+                        
+                        let quality = qualityValue / 100;
+                        if (mimeType === 'image/png') {
+                            quality = undefined; // PNG conversion uses standard system parameters (lossless)
+                        }
+
+                        canvas.toBlob((blob) => {
+                            const rawName = file.name.substring(0, file.name.lastIndexOf('.'));
+                            resolve({
+                                blob: blob,
+                                name: rawName + '_compressed' + ext,
+                                originalSize: file.size,
+                                compressedSize: blob.size
+                            });
+                        }, mimeType, quality);
+                    };
+                };
+            });
+        }
+
+        // Process files & generate single zip file for download
+        processBtn.addEventListener('click', async () => {
+            // Re-enforce limits
+            if (selectedFiles.length > maxFreeFiles) {
+                premiumCount.textContent = selectedFiles.length;
+                premiumModal.classList.remove('hidden');
+                return;
+            }
+
+            processBtn.disabled = true;
+            processBtn.textContent = 'Processing...';
+            
+            const quality = parseInt(qualityRange.value);
+            const format = formatSelect.value;
+            const zip = new JSZip();
+            
+            let totalOrig = 0;
+            let totalNew = 0;
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const res = await compressImage(selectedFiles[i], quality, format);
+                zip.file(res.name, res.blob);
+                totalOrig += res.originalSize;
+                totalNew += res.compressedSize;
+            }
+
+            const savings = ((totalOrig - totalNew) / totalOrig * 100).toFixed(1);
+            savingsSummary.innerHTML = `Total Savings: <span class="text-emerald-400 font-bold">-${savings > 0 ? savings : 0}%</span>`;
+
+            zip.generateAsync({type: 'blob'}).then((content) => {
+                const element = document.createElement('a');
+                element.href = URL.createObjectURL(content);
+                element.download = 'swiftcompress_batch.zip';
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+                
+                processBtn.disabled = false;
+                processBtn.textContent = 'Compress & Download ZIP';
+            });
+        });
+    </script>
+</body>
+</html>
